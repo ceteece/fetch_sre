@@ -15,3 +15,5 @@
 
 - for "production ready", maybe we want to do some light refactoring for the sake of maintainability + extensibility?
   - save this for the very end, though, definitely lower priority just getting the functionality right will keeping the code relatively clean
+
+- will need to make sure requests actually contain everything we expect them to
