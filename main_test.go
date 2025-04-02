@@ -3,6 +3,7 @@ import (
     "net/http"
     "net/http/httptest"
     "testing"
+    "time"
 )
 
 func TestExtractDomain(t *testing.T) {
@@ -29,13 +30,15 @@ func TestExtractDomain(t *testing.T) {
 
 func TestCheckHealth(t *testing.T) {
     handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        if r.URL.Path == "/server_err" {
+        switch r.URL.Path {
+        case "/server_err":
             w.WriteHeader(http.StatusInternalServerError)
-
-            return
+        case "/slow":
+            time.Sleep(5 * time.Second)            
+            w.WriteHeader(http.StatusOK)
+        default:
+            w.WriteHeader(http.StatusOK)
         }
-
-        w.WriteHeader(http.StatusOK)
     })
 
     server := httptest.NewServer(handler)
@@ -51,6 +54,7 @@ func TestCheckHealth(t *testing.T) {
     }{
         {"basic_200", Endpoint{"test", server.URL, "GET", make(map[string]string), ""}, 1, 1},
         {"basic_500", Endpoint{"test", server.URL + "/server_err", "GET", make(map[string]string), ""}, 0, 1},
+        {"slow", Endpoint{"test", server.URL + "/slow", "GET", make(map[string]string), ""}, 0, 1},
     }
 
     for _, tt := range tests {
