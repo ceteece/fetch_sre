@@ -9,6 +9,24 @@
 
 - step 2: add tests?
 
+- issues:
+  - `extractDomain` makes mistakes in some cases:
+    - identified issues by reading the code
+    - confirmed by writing test cases to cover suspected failure cases (and other basic test cases to prevent regression)
+    - issues with original code:
+      - included port numbers in domain name
+      - if path contained `//`, would not parse the domain correctly (it would use the part of the path after the last `//` as the domain)
+    - updated code to ensure all test cases passed
+
+  - `checkHealth` would not report a failure if request took more than 500 ms:
+    - identified issue by reading the code
+    - confirmed issue by adding test cases for `checkHealth`, one of which included the server taking more than 500 ms to respond
+    - added `Timeout` value of 500 ms to `http.Client` used by `checkHealth`, now `checkHealth` cancels the request after 500 ms and reports that the request failed
+
+  - TODO:
+    - `checkHealth` calls are serialized, which could easily take more than 15 seconds if number of endpoints is very high
+    - we sleep for 15 seconds after all calls to `checkHealth`, which means our actual health check period will exceed 15s
+
 ## Thoughts
 - do we want to get the cumulative counts for domain stats across all iterations, or reset the domain stats after each iteration?
   - might need to ask for clarification on this one?
@@ -31,3 +49,5 @@
 - also, might want to not have a global variable and refactor things into one or more structs or something
   - again, though, let's save that for the end, after things are mostly working
     - and even then, we probably should keep changes relatively minimal
+
+- add tests to confirm that even if we have a large number of endpoints (with delays that would take well over 15 seconds if the requests were all serialized), we can hit all of them in under 15 seconds

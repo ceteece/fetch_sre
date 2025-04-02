@@ -52,8 +52,6 @@ func checkHealth(endpoint Endpoint) {
 		req.Header.Set(key, value)
 	}
 
-    // TODO: need to stop waiting on request after 500ms,
-    //   and then mark request as failed
 	resp, err := client.Do(req)
 
 	domain := extractDomain(endpoint.URL)
