@@ -49,6 +49,8 @@ func checkHealth(endpoint Endpoint) {
 		req.Header.Set(key, value)
 	}
 
+    // TODO: need to stop waiting on request after 500ms,
+    //   and then mark request as failed
 	resp, err := client.Do(req)
 	domain := extractDomain(endpoint.URL)
 
@@ -58,6 +60,8 @@ func checkHealth(endpoint Endpoint) {
 	}
 }
 
+// TODO: this function seems okay, but maybe write some unit tests anyway
+// TODO: this won't ignore port numbers, add test and fix
 func extractDomain(url string) string {
 	urlSplit := strings.Split(url, "//")
 	domain := strings.Split(urlSplit[len(urlSplit)-1], "/")[0]
@@ -72,11 +76,17 @@ func monitorEndpoints(endpoints []Endpoint) {
 		}
 	}
 
+    // TODO: do we want to reset domain stats after each iteration, or get the cumulative results from all iterations?
 	for {
+        // TODO: need to send requests in parallel, rather than serially, otherwise we'll exceed 15 second period if we have > 30 requests
 		for _, endpoint := range endpoints {
 			checkHealth(endpoint)
 		}
 		logResults()
+
+        // TODO: this adds 15s on top of the time it takes to check all of the endpoints, which isn't what we want
+        //  will want to use match to ensure we always move on to next iteration after exactly 15s
+        //    might need a "stop" channel to kill any outstanding checks?
 		time.Sleep(15 * time.Second)
 	}
 }
