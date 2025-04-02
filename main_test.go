@@ -8,6 +8,9 @@ func TestExtractDomain(t *testing.T) {
         expected string
     }{
         {"basic_url", "https://somesite.com", "somesite.com"},
+        {"with_path", "https://test.net/some/path", "test.net"},
+        {"path_with_double_slash", "https://test.net/some//path", "test.net"},
+        {"with_port", "http://somesite.com:80/path/", "somesite.com"},
     }
 
     for _, tt := range tests {
