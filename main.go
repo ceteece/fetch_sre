@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+    "sync/atomic"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -24,8 +25,8 @@ type Endpoint struct {
 }
 
 type DomainStats struct {
-	Success int
-	Total   int
+	Success atomic.Uint64
+	Total   atomic.Uint64
 }
 
 var stats = make(map[string]*DomainStats)
@@ -51,16 +52,17 @@ func checkHealth(endpoint Endpoint) {
 
     // TODO: need to stop waiting on request after 500ms,
     //   and then mark request as failed
+    //print("SENDING REQUEST")
 	resp, err := client.Do(req)
-	domain := extractDomain(endpoint.URL)
+    //print("RESPONSE RECEIVED")
 
-	stats[domain].Total++
+	domain := extractDomain(endpoint.URL)
+	stats[domain].Total.Add(1)
 	if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		stats[domain].Success++
+		stats[domain].Success.Add(1)
 	}
 }
 
-// TODO: this function seems okay, but maybe write some unit tests anyway
 // TODO: this won't ignore port numbers, add test and fix
 func extractDomain(url string) string {
 	urlSplit := strings.Split(url, "//")
@@ -93,7 +95,7 @@ func monitorEndpoints(endpoints []Endpoint) {
 
 func logResults() {
 	for domain, stat := range stats {
-		percentage := int(math.Round(100 * float64(stat.Success) / float64(stat.Total)))
+		percentage := int(math.Round(100 * float64(stat.Success.Load()) / float64(stat.Total.Load())))
 		fmt.Printf("%s has %d%% availability\n", domain, percentage)
 	}
 }
@@ -109,6 +111,7 @@ func main() {
 		log.Fatal("Error reading file:", err)
 	}
 
+    // TODO: make sure this gets parsed properly, including using defaults when needed
 	var endpoints []Endpoint
 	if err := yaml.Unmarshal(data, &endpoints); err != nil {
 		log.Fatal("Error parsing YAML:", err)

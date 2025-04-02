@@ -17,3 +17,17 @@
   - save this for the very end, though, definitely lower priority just getting the functionality right will keeping the code relatively clean
 
 - will need to make sure requests actually contain everything we expect them to
+
+- will need to serialize updates to counters for domain stats
+
+- will probably want some end-to-end integration tests
+
+- figuring out how to test some of this stuff might be tricky
+
+- will need to test that YAML file gets parsed properly at some point
+
+- might want to update `checkHealth` to return `healthResults` with two boolean fields `Attempted` and `Succeeded`, or something like that, rather than relying on updating a global variable
+
+- also, might want to not have a global variable and refactor things into one or more structs or something
+  - again, though, let's save that for the end, after things are mostly working
+    - and even then, we probably should keep changes relatively minimal
