@@ -29,9 +29,13 @@ func TestExtractDomain(t *testing.T) {
 
 func TestCheckHealth(t *testing.T) {
     handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        //print("RECEIVED REQUEST")
+        if r.URL.Path == "/server_err" {
+            w.WriteHeader(http.StatusInternalServerError)
+
+            return
+        }
+
         w.WriteHeader(http.StatusOK)
-        //print("WROTE HEADER")
     })
 
     server := httptest.NewServer(handler)
@@ -46,7 +50,7 @@ func TestCheckHealth(t *testing.T) {
         total uint64
     }{
         {"basic_200", Endpoint{"test", server.URL, "GET", make(map[string]string), ""}, 1, 1},
-        //{"basic_", Endpoint{"test", server.URL, "GET", make(map[string]string), ""}, 1, 1},
+        {"basic_500", Endpoint{"test", server.URL + "/server_err", "GET", make(map[string]string), ""}, 0, 1},
     }
 
     for _, tt := range tests {
