@@ -1,7 +1,12 @@
 package main
 import (
+    "context"
+    "fmt"
+    "io"
+    "net"
     "net/http"
     "net/http/httptest"
+    "os/exec"
     "testing"
     "time"
 )
@@ -101,4 +106,57 @@ func TestCheckEndpoints(t *testing.T) {
     if stats[domain].Total.Load() != 100 {
         t.Errorf("only %d out of 100 health checks completed", stats[domain].Total.Load())
     }
+}
+
+func TestIntegrationBasic(t *testing.T) {
+    handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(http.StatusOK)
+    })
+
+    url := "127.0.0.1:35580"
+    l, err := net.Listen("tcp", url)
+    if err != nil {
+        t.Fatalf("failed to listen on %s", url)
+    }
+
+    server := httptest.NewUnstartedServer(handler)
+    server.Listener.Close()
+    server.Listener = l
+
+    server.Start()
+    defer server.Close()
+
+    ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+    defer cancel()
+
+    cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/basic.yaml")
+    stdout, err := cmd.StdoutPipe()
+    if err != nil {
+        t.Fatalf("failed to create stdout pipe")
+    }
+
+    stderr, err := cmd.StderrPipe()
+    if err != nil {
+        t.Fatalf("failed to create stderr pipe")
+    }
+
+    //err = cmd.Run()
+    //if err != nil {
+    //    t.Fatalf("failed to start command")
+    //}
+
+    cmd.Run()
+
+    output, err := io.ReadAll(stdout)
+    if err != nil {
+        t.Fatalf("failed to read stdout")
+    }
+
+    errors, err := io.ReadAll(stderr)
+    if err != nil {
+        t.Fatalf("failed to read stderr")
+    }
+
+    fmt.Println("stdout: ", string(output))
+    fmt.Println("stderr: ", string(errors))
 }

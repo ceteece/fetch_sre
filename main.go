@@ -110,6 +110,7 @@ func monitorEndpoints(endpoints []Endpoint) {
 }
 
 func logResults() {
+    fmt.Println("HOWDY")
 	for domain, stat := range stats {
 		percentage := int(math.Round(100 * float64(stat.Success.Load()) / float64(stat.Total.Load())))
 		fmt.Printf("%s has %d%% availability\n", domain, percentage)
