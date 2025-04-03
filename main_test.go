@@ -46,6 +46,7 @@ func TestCheckHealth(t *testing.T) {
 
     domain := extractDomain(server.URL)
 
+    // TODO: add tests for other REST methods, with/without body and header
     tests := []struct {
         name string
         endpoint Endpoint

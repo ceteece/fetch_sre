@@ -23,8 +23,12 @@
     - confirmed issue by adding test cases for `checkHealth`, one of which included the server taking more than 500 ms to respond
     - added `Timeout` value of 500 ms to `http.Client` used by `checkHealth`, now `checkHealth` cancels the request after 500 ms and reports that the request failed
 
+  - when checking all endpoints the `checkHealth` calls are serialized, which could easily take more than 15 seconds if the total latency of all of the endpoints is high enough
+     - moved logic for checking all endpoints to `checkEndpoints` function, which checks health of each endpoint exactly once
+     - added `TestCheckEndpoints` test to confirm that, with starter code, time to check all endpoints exceeds 15s with 100 endpoints with 250ms latency each
+     - updated `checkEndpoints` function to check all endpoints in parallel, with each `checkHealth` call in a separate goroutine, ensuring we can check a large number of endpoints while staying well with the 15s interval
+
   - TODO:
-    - `checkHealth` calls are serialized, which could easily take more than 15 seconds if number of endpoints is very high
     - we sleep for 15 seconds after all calls to `checkHealth`, which means our actual health check period will exceed 15s
 
 ## Thoughts
