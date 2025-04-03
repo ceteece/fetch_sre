@@ -97,14 +97,14 @@ func monitorEndpoints(endpoints []Endpoint) {
 		}
 	}
 
+    next_log_time := time.Now()
 	for {
         checkEndpoints(endpoints)
-		logResults()
 
-        // TODO: this adds 15s on top of the time it takes to check all of the endpoints, which isn't what we want
-        //  will want to use match to ensure we always move on to next iteration after exactly 15s
-        //    might need a "stop" channel to kill any outstanding checks?
-		time.Sleep(15 * time.Second)
+		time.Sleep(time.Until(next_log_time))
+        logResults()
+
+        next_log_time = next_log_time.Add(15 * time.Second)
 	}
 }
 
@@ -126,7 +126,6 @@ func main() {
 		log.Fatal("Error reading file:", err)
 	}
 
-    // TODO: make sure this gets parsed properly, including using defaults when needed
 	var endpoints []Endpoint
 	if err := yaml.Unmarshal(data, &endpoints); err != nil {
 		log.Fatal("Error parsing YAML:", err)
