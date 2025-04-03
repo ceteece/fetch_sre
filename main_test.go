@@ -346,6 +346,66 @@ func TestSlow(t *testing.T) {
 }
 
 // TODO: add test for multiple domains
+func TestMultipleDomains(t *testing.T) {
+    handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if r.URL.Path == "/bad" {
+            w.WriteHeader(http.StatusInternalServerError)
+        } else {
+            w.WriteHeader(http.StatusOK)
+        }
+    })
+
+    for _, url := range [2]string{"127.0.0.1:35580", "127.0.0.2:35581"} {
+        l, err := net.Listen("tcp", url)
+        if err != nil {
+            t.Fatalf("failed to listen on %s", url)
+        }
+
+        server := httptest.NewUnstartedServer(handler)
+        server.Listener.Close()
+        server.Listener = l
+
+        server.Start()
+        defer server.Close()
+    }
+
+    ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+    defer cancel()
+
+    cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/multiple_domains.yaml")
+    stdout, err := cmd.StdoutPipe()
+    if err != nil {
+        t.Fatalf("failed to create stdout pipe")
+    }
+
+    go cmd.Run()
+
+    i := 0
+    scanner := bufio.NewScanner(stdout)
+    for i < 2 && scanner.Scan() {
+        line := scanner.Text()
+        domain, availability := parseOutput(line)
+        
+        switch domain {
+        case "127.0.0.1":
+            if availability != "67%" {
+                t.Errorf("got availability of %s for 127.0.0.1, expected 67%%", availability)
+            }
+        case "127.0.0.2":
+            if availability != "75%" {
+                t.Errorf("got availability of %s for 127.0.0.2, expected 75%%", availability)
+            }
+        default:
+            t.Errorf("got domain %s, expected either 127.0.0.1 or 127.0.0.2", domain)
+        }
+
+        i++
+    }
+
+    if i < 2 {
+        t.Errorf("got %d lines of output, expected 2", i)
+    }
+}
 
 
 // TODO: add "super" test which includes many endpoints from several different domains, confirm output is produced every 15s exactly, and output is actually correct
