@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+    "sync"
     "sync/atomic"
 	"time"
 
@@ -69,9 +70,18 @@ func extractDomain(url string) string {
 }
 
 func checkEndpoints(endpoints []Endpoint) {
+    var wg sync.WaitGroup
+
 	for _, endpoint := range endpoints {
-		checkHealth(endpoint)
+        wg.Add(1)
+
+		go func() {
+            defer wg.Done()
+            checkHealth(endpoint)
+        }()
 	}
+
+    wg.Wait()
 }
 
 func monitorEndpoints(endpoints []Endpoint) {
