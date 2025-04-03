@@ -68,6 +68,12 @@ func extractDomain(url string) string {
 	return domain
 }
 
+func checkEndpoints(endpoints []Endpoint) {
+	for _, endpoint := range endpoints {
+		checkHealth(endpoint)
+	}
+}
+
 func monitorEndpoints(endpoints []Endpoint) {
 	for _, endpoint := range endpoints {
 		domain := extractDomain(endpoint.URL)
@@ -79,9 +85,7 @@ func monitorEndpoints(endpoints []Endpoint) {
     // TODO: do we want to reset domain stats after each iteration, or get the cumulative results from all iterations?
 	for {
         // TODO: need to send requests in parallel, rather than serially, otherwise we'll exceed 15 second period if we have > 30 requests
-		for _, endpoint := range endpoints {
-			checkHealth(endpoint)
-		}
+        checkEndpoints(endpoints)
 		logResults()
 
         // TODO: this adds 15s on top of the time it takes to check all of the endpoints, which isn't what we want

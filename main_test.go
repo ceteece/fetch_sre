@@ -66,5 +66,34 @@ func TestCheckHealth(t *testing.T) {
             }
         })
     }
+}
 
+func TestCheckEndpoints(t *testing.T) {
+    handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        time.Sleep(250 * time.Millisecond)
+        w.WriteHeader(http.StatusOK)
+    })
+
+    server := httptest.NewServer(handler)
+    defer server.Close()
+
+    domain := extractDomain(server.URL)
+
+    // initialize stats
+    endpoints := make([]Endpoint, 0)
+    for range 100 {
+        endpoints = append(endpoints, Endpoint{"test", server.URL, "GET", make(map[string]string), ""})
+    }
+
+    stats[domain] = &DomainStats{}
+
+    start := time.Now()
+    checkEndpoints(endpoints)
+    end := time.Now()
+
+    runtime := end.Sub(start).Seconds()
+
+    if runtime >= 15.0 {
+        t.Errorf("took %f seconds to check all endpoints, should be <15s", runtime)
+    }
 }
