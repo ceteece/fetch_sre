@@ -2,12 +2,11 @@ package main
 import (
     "bufio"
     "context"
-    "fmt"
-    //"io"
     "net"
     "net/http"
     "net/http/httptest"
     "os/exec"
+    "strings"
     "testing"
     "time"
 )
@@ -109,6 +108,12 @@ func TestCheckEndpoints(t *testing.T) {
     }
 }
 
+func parseOutput(line string) (string, string) {
+    split := strings.Split(line, " ")
+
+    return split[0], split[2]
+}
+
 func TestIntegrationBasic(t *testing.T) {
     handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
@@ -127,7 +132,7 @@ func TestIntegrationBasic(t *testing.T) {
     server.Start()
     defer server.Close()
 
-    ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
     defer cancel()
 
     cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/basic.yaml")
@@ -136,34 +141,16 @@ func TestIntegrationBasic(t *testing.T) {
         t.Fatalf("failed to create stdout pipe")
     }
 
-    //stderr, err := cmd.StderrPipe()
-    //if err != nil {
-    //    t.Fatalf("failed to create stderr pipe")
-    //}
-
-    //err = cmd.Run()
-    //if err != nil {
-    //    t.Fatalf("failed to start command")
-    //}
-
-    cmd.Start()
+    go cmd.Run()
 
     scanner := bufio.NewScanner(stdout)
-    for scanner.Scan() {
+    if scanner.Scan() {
         line := scanner.Text()
-        fmt.Println(line)
+        domain, availability := parseOutput(line)
+        if domain != "127.0.0.1" || availability != "100%" {
+            t.Errorf("got %s availability for %s, expected 100%% availability for 127.0.0.1", domain, availability)
+        }
+    } else {
+        t.Errorf("no availability information was printed")
     }
-
-    //output, err := io.ReadAll(stdout)
-    //if err != nil {
-    //    t.Fatalf("failed to read stdout")
-    //}
-
-    //errors, err := io.ReadAll(stderr)
-    //if err != nil {
-    //    t.Fatalf("failed to read stderr")
-    //}
-
-    //fmt.Println("stdout: ", string(output))
-    //fmt.Println("stderr: ", string(errors))
 }

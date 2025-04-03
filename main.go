@@ -97,7 +97,6 @@ func monitorEndpoints(endpoints []Endpoint) {
 		}
 	}
 
-    // TODO: do we want to reset domain stats after each iteration, or get the cumulative results from all iterations?
 	for {
         checkEndpoints(endpoints)
 		logResults()
