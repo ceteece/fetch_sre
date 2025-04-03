@@ -62,10 +62,15 @@ func checkHealth(endpoint Endpoint) {
 	}
 }
 
-// TODO: this won't ignore port numbers, add test and fix
 func extractDomain(url string) string {
-	urlSplit := strings.Split(url, "//")
-	domain := strings.Split(urlSplit[len(urlSplit)-1], "/")[0]
+    url, found := strings.CutPrefix(url, "https://")
+    if !found {
+        url = strings.TrimPrefix(url, "http://")
+    }
+
+	authority := strings.Split(url, "/")[0]
+    domain := strings.Split(authority, ":")[0]
+
 	return domain
 }
 

@@ -14,7 +14,7 @@
     - identified issues by reading the code
     - confirmed by writing test cases to cover suspected failure cases (and other basic test cases to prevent regression)
     - issues with original code:
-      - included port numbers in domain name
+      - included port numbers in domain
       - if path contained `//`, would not parse the domain correctly (it would use the part of the path after the last `//` as the domain)
     - updated code to ensure all test cases passed
 
@@ -24,9 +24,11 @@
     - added `Timeout` value of 500 ms to `http.Client` used by `checkHealth`, now `checkHealth` cancels the request after 500 ms and reports that the request failed
 
   - when checking all endpoints the `checkHealth` calls are serialized, which could easily take more than 15 seconds if the total latency of all of the endpoints is high enough
-     - moved logic for checking all endpoints to `checkEndpoints` function, which checks health of each endpoint exactly once
-     - added `TestCheckEndpoints` test to confirm that, with starter code, time to check all endpoints exceeds 15s with 100 endpoints with 250ms latency each
-     - updated `checkEndpoints` function to check all endpoints in parallel, with each `checkHealth` call in a separate goroutine, ensuring we can check a large number of endpoints while staying well with the 15s interval
+    - moved logic for checking all endpoints to `checkEndpoints` function, which checks health of each endpoint exactly once
+    - added `TestCheckEndpoints` test to confirm that, with starter code, time to check all endpoints exceeds 15s with 100 endpoints with 250ms latency each
+    - updated `checkEndpoints` function to check all endpoints in parallel, with each `checkHealth` call in a separate goroutine, ensuring we can check a large number of endpoints while staying well with the 15s interval
+      - also updated `DomainStats` to use atomic integers to prevent race conditions when multiple `checkHealth` calls are run in parallel for endpoints belonging to the same domain
+
 
   - TODO:
     - we sleep for 15 seconds after all calls to `checkHealth`, which means our actual health check period will exceed 15s
@@ -55,3 +57,5 @@
     - and even then, we probably should keep changes relatively minimal
 
 - add tests to confirm that even if we have a large number of endpoints (with delays that would take well over 15 seconds if the requests were all serialized), we can hit all of them in under 15 seconds
+
+- don't forget to run `go fmt` to format everything before submitting code
