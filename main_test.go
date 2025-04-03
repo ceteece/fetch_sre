@@ -273,3 +273,77 @@ func TestPostOK(t *testing.T) {
         t.Errorf("no availability information was printed")
     }
 }
+
+// TODO: add test for slow endpoint, confirm refresh time is fast enough
+func TestSlow(t *testing.T) {
+    handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != "GET" {
+            t.Errorf("got HTTP method %s, expected GET", r.Method)
+        }
+
+        time.Sleep(750 * time.Millisecond)
+        w.WriteHeader(http.StatusOK)
+    })
+
+    url := "127.0.0.1:35580"
+    l, err := net.Listen("tcp", url)
+    if err != nil {
+        t.Fatalf("failed to listen on %s", url)
+    }
+
+    server := httptest.NewUnstartedServer(handler)
+    server.Listener.Close()
+    server.Listener = l
+
+    server.Start()
+    defer server.Close()
+
+    ctx, cancel := context.WithTimeout(context.Background(), 40 * time.Second)
+    defer cancel()
+
+    cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/basic.yaml")
+    stdout, err := cmd.StdoutPipe()
+    if err != nil {
+        t.Fatalf("failed to create stdout pipe")
+    }
+
+    go cmd.Run()
+
+    scanner := bufio.NewScanner(stdout)
+    if scanner.Scan() {
+        current_time := time.Now()
+
+        line := scanner.Text()
+        domain, availability := parseOutput(line)
+        if domain != "127.0.0.1" || availability != "0%" {
+            t.Errorf("got %s availability for %s, expected 0%% availability for 127.0.0.1", availability, domain)
+        }
+
+        for scanner.Scan() {
+            prev_time := current_time
+            current_time = time.Now()
+            time_diff := current_time.Sub(prev_time).Milliseconds()
+            //fmt.Println(time_diff)
+            if time_diff > 15400 || time_diff < 14600 {
+                t.Errorf("time difference between intervals was %d ms, expected time to be within 14600ms - 15400ms", time_diff)
+            }
+
+            line := scanner.Text()
+            domain, availability := parseOutput(line)
+            if domain != "127.0.0.1" || availability != "0%" {
+                t.Errorf("got %s availability for %s, expected 0%% availability for 127.0.0.1", availability, domain)
+            }
+        }
+    } else {
+        t.Errorf("no availability information was printed")
+    }
+}
+
+// TODO: add test for multiple domains
+
+
+// TODO: add "super" test which includes many endpoints from several different domains, confirm output is produced every 15s exactly, and output is actually correct
+
+// TODO: test server where not all endpoints are available
+
+// TODO: test server where availability changes over time
