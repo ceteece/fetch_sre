@@ -152,7 +152,52 @@ func TestGetOK(t *testing.T) {
         line := scanner.Text()
         domain, availability := parseOutput(line)
         if domain != "127.0.0.1" || availability != "100%" {
-            t.Errorf("got %s availability for %s, expected 100%% availability for 127.0.0.1", domain, availability)
+            t.Errorf("got %s availability for %s, expected 100%% availability for 127.0.0.1", availability, domain)
+        }
+    } else {
+        t.Errorf("no availability information was printed")
+    }
+}
+
+func TestGetFail(t *testing.T) {
+    handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != "GET" {
+            t.Errorf("got HTTP method %s, expected GET", r.Method)
+        }
+
+        w.WriteHeader(http.StatusInternalServerError)
+    })
+
+    url := "127.0.0.1:35580"
+    l, err := net.Listen("tcp", url)
+    if err != nil {
+        t.Fatalf("failed to listen on %s", url)
+    }
+
+    server := httptest.NewUnstartedServer(handler)
+    server.Listener.Close()
+    server.Listener = l
+
+    server.Start()
+    defer server.Close()
+
+    ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+    defer cancel()
+
+    cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/basic.yaml")
+    stdout, err := cmd.StdoutPipe()
+    if err != nil {
+        t.Fatalf("failed to create stdout pipe")
+    }
+
+    go cmd.Run()
+
+    scanner := bufio.NewScanner(stdout)
+    if scanner.Scan() {
+        line := scanner.Text()
+        domain, availability := parseOutput(line)
+        if domain != "127.0.0.1" || availability != "0%" {
+            t.Errorf("got %s availability for %s, expected 0%% availability for 127.0.0.1", availability, domain)
         }
     } else {
         t.Errorf("no availability information was printed")
