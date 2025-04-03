@@ -102,9 +102,9 @@ func monitorEndpoints(endpoints []Endpoint) {
         checkEndpoints(endpoints)
 
 		time.Sleep(time.Until(next_log_time))
-        logResults()
+        next_log_time = time.Now().Add(15 * time.Second)
 
-        next_log_time = next_log_time.Add(15 * time.Second)
+        logResults()
 	}
 }
 

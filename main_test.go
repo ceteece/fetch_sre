@@ -3,7 +3,6 @@ import (
     "bufio"
     "context"
     "encoding/json"
-    "fmt"
     "io"
     "net"
     "net/http"
@@ -299,7 +298,7 @@ func TestSlow(t *testing.T) {
     server.Start()
     defer server.Close()
 
-    ctx, cancel := context.WithTimeout(context.Background(), 81 * time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 40 * time.Second)
     defer cancel()
 
     cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/basic.yaml")
@@ -324,7 +323,6 @@ func TestSlow(t *testing.T) {
             prev_time := current_time
             current_time = time.Now()
             time_diff := current_time.Sub(prev_time).Milliseconds()
-            fmt.Println(time_diff)
             if time_diff > 15400 || time_diff < 14600 {
                 t.Errorf("time difference between intervals was %d ms, expected time to be within 14600ms - 15400ms", time_diff)
             }
