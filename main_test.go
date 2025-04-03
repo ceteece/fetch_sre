@@ -309,6 +309,7 @@ func TestSlow(t *testing.T) {
 
     go cmd.Run()
 
+    i := 0
     scanner := bufio.NewScanner(stdout)
     if scanner.Scan() {
         current_time := time.Now()
@@ -319,7 +320,9 @@ func TestSlow(t *testing.T) {
             t.Errorf("got %s availability for %s, expected 0%% availability for 127.0.0.1", availability, domain)
         }
 
-        for scanner.Scan() {
+        i++
+
+        for i < 3 && scanner.Scan() {
             prev_time := current_time
             current_time = time.Now()
             time_diff := current_time.Sub(prev_time).Milliseconds()
@@ -332,9 +335,13 @@ func TestSlow(t *testing.T) {
             if domain != "127.0.0.1" || availability != "0%" {
                 t.Errorf("got %s availability for %s, expected 0%% availability for 127.0.0.1", availability, domain)
             }
+
+            i++
         }
-    } else {
-        t.Errorf("no availability information was printed")
+    }
+
+    if i < 3 {
+        t.Errorf("got only %d lines of availability info, expected 3", i)
     }
 }
 
