@@ -2,6 +2,8 @@ package main
 import (
     "bufio"
     "context"
+    "fmt"
+    "io"
     "net"
     "net/http"
     "net/http/httptest"
@@ -198,6 +200,62 @@ func TestGetFail(t *testing.T) {
         domain, availability := parseOutput(line)
         if domain != "127.0.0.1" || availability != "0%" {
             t.Errorf("got %s availability for %s, expected 0%% availability for 127.0.0.1", availability, domain)
+        }
+    } else {
+        t.Errorf("no availability information was printed")
+    }
+}
+
+func TestPostOK(t *testing.T) {
+    handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != "POST" {
+            t.Errorf("got HTTP method %s, expected POST", r.Method)
+        }
+
+        if r.URL.Path != "/body" {
+            t.Errorf("got request for path %s, expected /body", r.URL.Path)
+        }
+
+        if r.Header.Get("content-type") != "application/json" {
+            t.Errorf("got content-type %s, expected application/json", r.Header["content-type"])
+        }
+
+        body, _ :=  io.ReadAll(r.Body)
+        fmt.Printf("BODY: %s\n", string(body))
+
+        w.WriteHeader(http.StatusOK)
+    })
+
+    url := "127.0.0.1:35580"
+    l, err := net.Listen("tcp", url)
+    if err != nil {
+        t.Fatalf("failed to listen on %s", url)
+    }
+
+    server := httptest.NewUnstartedServer(handler)
+    server.Listener.Close()
+    server.Listener = l
+
+    server.Start()
+    defer server.Close()
+
+    ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+    defer cancel()
+
+    cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/post.yaml")
+    stdout, err := cmd.StdoutPipe()
+    if err != nil {
+        t.Fatalf("failed to create stdout pipe")
+    }
+
+    go cmd.Run()
+
+    scanner := bufio.NewScanner(stdout)
+    if scanner.Scan() {
+        line := scanner.Text()
+        domain, availability := parseOutput(line)
+        if domain != "127.0.0.1" || availability != "100%" {
+            t.Errorf("got %s availability for %s, expected 100%% availability for 127.0.0.1", availability, domain)
         }
     } else {
         t.Errorf("no availability information was printed")

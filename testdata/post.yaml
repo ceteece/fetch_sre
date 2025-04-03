@@ -1,0 +1,6 @@
+- name: post_test
+  url: http://127.0.0.1:35580/body
+  method: POST
+  body: '{"foo": "bar"}'
+  headers:
+    content-type: application/json
