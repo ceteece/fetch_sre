@@ -94,7 +94,6 @@ func monitorEndpoints(endpoints []Endpoint) {
 
     // TODO: do we want to reset domain stats after each iteration, or get the cumulative results from all iterations?
 	for {
-        // TODO: need to send requests in parallel, rather than serially, otherwise we'll exceed 15 second period if we have > 30 requests
         checkEndpoints(endpoints)
 		logResults()
 

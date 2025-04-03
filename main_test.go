@@ -79,7 +79,6 @@ func TestCheckEndpoints(t *testing.T) {
 
     domain := extractDomain(server.URL)
 
-    // initialize stats
     endpoints := make([]Endpoint, 0)
     for range 100 {
         endpoints = append(endpoints, Endpoint{"test", server.URL, "GET", make(map[string]string), ""})
@@ -95,5 +94,10 @@ func TestCheckEndpoints(t *testing.T) {
 
     if runtime >= 15.0 {
         t.Errorf("took %f seconds to check all endpoints, should be <15s", runtime)
+    }
+ 
+    // confirm that all checks actually completed
+    if stats[domain].Total.Load() != 100 {
+        t.Errorf("only %d out of 100 health checks completed", stats[domain].Total.Load())
     }
 }
