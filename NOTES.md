@@ -33,8 +33,9 @@
     - discovered while writing "TestPostOK", when adding check to confirm that body matches what is provided in the YAML file
     - fixed by updating `checkHealth` to only use the actual body as the request body
 
-  - TODO:
-    - we sleep for 15 seconds after all calls to `checkHealth`, which means our actual health check period will exceed 15s
+  - we sleep for 15 seconds after all calls to `checkHealth`, which means our actual health check period will exceed 15s
+    - identified by reading the code, confirmed by adding test case that fails when checking health of all endpoints takes significant amount of time (`TestSlow`)
+    - updated code to wait to log stats until 15 seconds have passed since the stats were last logged, rather than 15 seconds since the stats were last collected
 
 
 ## Thoughts
