@@ -2,7 +2,7 @@ package main
 import (
     "bufio"
     "context"
-    "fmt"
+    "encoding/json"
     "io"
     "net"
     "net/http"
@@ -220,8 +220,20 @@ func TestPostOK(t *testing.T) {
             t.Errorf("got content-type %s, expected application/json", r.Header["content-type"])
         }
 
-        body, _ :=  io.ReadAll(r.Body)
-        fmt.Printf("BODY: %s\n", string(body))
+        body, err :=  io.ReadAll(r.Body)
+        if err != nil {
+            t.Errorf("failed to read request body")
+        }
+
+        var body_string string
+        err = json.Unmarshal(body, &body_string)
+        if err != nil {
+            t.Errorf("failed to unmarshal request body")
+        }
+
+        if body_string != "{\"foo\": \"bar\"}" {
+            t.Errorf("got body %s, expected {\"foo\": \"bar\"}", body_string)
+        }
 
         w.WriteHeader(http.StatusOK)
     })

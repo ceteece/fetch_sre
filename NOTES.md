@@ -29,9 +29,13 @@
     - updated `checkEndpoints` function to check all endpoints in parallel, with each `checkHealth` call in a separate goroutine, ensuring we can check a large number of endpoints while staying well with the 15s interval
       - also updated `DomainStats` to use atomic integers to prevent race conditions when multiple `checkHealth` calls are run in parallel for endpoints belonging to the same domain
 
+  - `checkHealth` was sending entire `Endpoint` struct as request body, should only be sending actual body
+    - discovered while writing "TestPostOK", when adding check to confirm that body matches what is provided in the YAML file
+    - fixed by updating `checkHealth` to only use the actual body as the request body
 
   - TODO:
     - we sleep for 15 seconds after all calls to `checkHealth`, which means our actual health check period will exceed 15s
+
 
 ## Thoughts
 - do we want to get the cumulative counts for domain stats across all iterations, or reset the domain stats after each iteration?

@@ -37,7 +37,7 @@ func checkHealth(endpoint Endpoint) {
         Timeout: 500 * time.Millisecond,
     }
 
-	bodyBytes, err := json.Marshal(endpoint)
+	bodyBytes, err := json.Marshal(endpoint.Body)
 	if err != nil {
 		return
 	}
