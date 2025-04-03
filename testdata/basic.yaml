@@ -1,2 +1,5 @@
-- name: basic
+- name: get_default
   url: http://127.0.0.1:35580
+- name: get_explicit
+  url: http://127.0.0.1:35580
+  method: GET

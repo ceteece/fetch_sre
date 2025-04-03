@@ -114,8 +114,12 @@ func parseOutput(line string) (string, string) {
     return split[0], split[2]
 }
 
-func TestIntegrationBasic(t *testing.T) {
+func TestGetOK(t *testing.T) {
     handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != "GET" {
+            t.Errorf("got HTTP method %s, expected GET", r.Method)
+        }
+
         w.WriteHeader(http.StatusOK)
     })
 
