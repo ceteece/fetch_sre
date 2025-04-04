@@ -1,0 +1,12 @@
+- name: get_default
+  url: https://lwn.net
+- name: get_default
+  url: https://lwn.net/op/FAQ.lwn
+- name: get_default
+  url: https://github.com/uutils//coreutils
+- name: get_default
+  url: https://lwn.net/bad/path
+- name: get_default
+  url: https://github.com/somejunkthatdoesntexist
+- name: get_default
+  url: https://en.wikipedia.org/wiki/Ostrich
