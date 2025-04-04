@@ -1,5 +1,8 @@
 ## Installation
-In the top-level project directory, run `go mod tidy`
+In the top-level project directory, run
+```
+go mod tidy
+```
 
 ## Usage
 To start monitoring endpoints, run:
@@ -43,6 +46,6 @@ Then, I wrote a combination of automated unit and integrations tests, trying to 
   - updated `checkEndpoints` function to check all endpoints in parallel, with each `checkHealth` call in a separate goroutine, ensuring we can check a large number of endpoints while staying well with the 15s interval
     - also updated `DomainStats` to use atomic integers to prevent race conditions when multiple `checkHealth` calls are run in parallel for endpoints belonging to the same domain
 
-- we sleep for 15 seconds after all calls to `checkHealth`, which means our actual health check period will exceed 15s (i.e. the actual time period will be `time_to_check_all_endpoints + 15s`)
+- we sleep for 15 seconds once all endpoints have been checked, which means our actual health check period will exceed 15s (i.e. the actual time period will be `time_to_check_all_endpoints + 15s`)
   - identified by reading the code, confirmed by adding test case that has slow-to-respond server and fails when time interval between consecutive iterations is not between 14600ms and 15400ms (`TestSlow`)
   - updated code to wait to log stats until 15 seconds have passed since the stats were last logged, rather than 15 seconds since the stats were last collected
