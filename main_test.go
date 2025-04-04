@@ -470,7 +470,9 @@ func TestComprehensive(t *testing.T) {
         // check that each domain exists in exactly one line
         counts := [3]int{0, 0, 0}
 
-        for line := range lines {
+        for _, line := range lines {
+            fmt.Println(line)
+
             domain, availability := parseOutput(line)
 
             switch domain {
@@ -487,7 +489,7 @@ func TestComprehensive(t *testing.T) {
             case "127.0.0.3":
                 counts[2] += 1
                 if availability != "90%" {
-                    t.Errorf("got availability of %s for 127.0.0.2, expected 90%%", availability)
+                    t.Errorf("got availability of %s for 127.0.0.3, expected 90%%", availability)
                 }
             default:
                 t.Errorf("got domain %s, expected either 127.0.0.1, 127.0.0.2, or 127.0.0.3", domain)
@@ -511,7 +513,7 @@ func TestComprehensive(t *testing.T) {
         }
     })
 
-    for _, url := range [2]string{"127.0.0.1:35580", "127.0.0.2:35581", "127.0.0.3:33582"} {
+    for _, url := range [3]string{"127.0.0.1:35580", "127.0.0.2:35581", "127.0.0.3:35582"} {
         l, err := net.Listen("tcp", url)
         if err != nil {
             t.Fatalf("failed to listen on %s", url)

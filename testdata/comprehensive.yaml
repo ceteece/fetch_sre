@@ -1,0 +1,72 @@
+- name: d1_0
+  url: http://127.0.0.1:35580/bad
+- name: d1_1
+  url: http://127.0.0.1:35580/bad
+- name: d1_2
+  url: http://127.0.0.1:35580/bad
+- name: d1_3
+  url: http://127.0.0.1:35580
+- name: d1_4
+  url: http://127.0.0.1:35580/other
+- name: d1_5
+  url: http://127.0.0.1:35580
+- name: d1_6
+  url: http://127.0.0.1:35580/other
+- name: d1_7
+  url: http://127.0.0.1:35580
+- name: d1_8
+  url: http://127.0.0.1:35580/other
+- name: d1_9
+  url: http://127.0.0.1:35580
+- name: d1_10
+  url: http://127.0.0.1:35580/other
+- name: d1_11
+  url: http://127.0.0.1:35580
+- name: d1_12
+  url: http://127.0.0.1:35580/other
+- name: d1_13
+  url: http://127.0.0.1:35580
+- name: d1_14
+  url: http://127.0.0.1:35580/other
+- name: d1_15
+  url: http://127.0.0.1:35580
+- name: d1_16
+  url: http://127.0.0.1:35580/other
+- name: d1_17
+  url: http://127.0.0.1:35580
+- name: d1_18
+  url: http://127.0.0.1:35580/other
+- name: d1_19
+  url: http://127.0.0.1:35580/other
+- name: d2_0
+  url: http://127.0.0.2:35581
+- name: d2_1
+  url: http://127.0.0.2:35581/bad
+- name: d2_2
+  url: http://127.0.0.2:35581/other
+  method: POST
+  body: '{"foo": "bar"}'
+  headers:
+    content-type: application/json
+- name: d2_3
+  url: http://127.0.0.2:35581/body
+  method: POST
+  body: "{}"
+  headers:
+    content-type: application/json
+- name: d3_0
+  url: http://127.0.0.3:35582
+- name: d3_1
+  url: http://127.0.0.3:35582/bad
+- name: d3_2
+  url: http://127.0.0.3:35582/other
+  method: POST
+  body: '{"foo": "bar"}'
+  headers:
+    content-type: application/json
+- name: d3_3
+  url: http://127.0.0.3:35582/body
+  method: POST
+  body: "{}"
+  headers:
+    content-type: application/json
