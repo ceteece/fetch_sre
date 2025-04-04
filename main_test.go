@@ -117,6 +117,7 @@ func parseOutput(line string) (string, string) {
     return split[0], split[2]
 }
 
+// TODO: check that there is no body
 func TestGetOK(t *testing.T) {
     handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         if r.Method != "GET" {
@@ -464,6 +465,115 @@ func TestChangingAvailability(t *testing.T) {
 }
 
 // TODO: add "super" test which includes many endpoints from several different domains, confirm output is produced every 15s exactly, and output is actually correct
+func TestComprehensive(t *testing.T) {
+    validateLines := func(lines []string) {
+        // check that each domain exists in exactly one line
+        counts := [3]int{0, 0, 0}
 
-// TODO: test server where not all endpoints are available
+        for line := range lines {
+            domain, availability := parseOutput(line)
 
+            switch domain {
+            case "127.0.0.1":
+                counts[0] += 1
+                if availability != "85%" {
+                    t.Errorf("got availability of %s for 127.0.0.1, expected 85%%", availability)
+                }
+            case "127.0.0.2":
+                counts[1] += 1
+                if availability != "75%" {
+                    t.Errorf("got availability of %s for 127.0.0.2, expected 75%%", availability)
+                }
+            case "127.0.0.3":
+                counts[2] += 1
+                if availability != "90%" {
+                    t.Errorf("got availability of %s for 127.0.0.2, expected 90%%", availability)
+                }
+            default:
+                t.Errorf("got domain %s, expected either 127.0.0.1, 127.0.0.2, or 127.0.0.3", domain)
+            }
+        }
+
+        for i := range 3 {
+            if counts[i] != 1 {
+                t.Errorf("one iteration of logging produce %d outputs for domain %d, expected 1", counts[i], i)
+            }
+        }
+    }
+
+    handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        time.Sleep(160 * time.Millisecond)
+
+        if r.URL.Path == "/bad" {
+            w.WriteHeader(http.StatusInternalServerError)
+        } else {
+            w.WriteHeader(http.StatusOK)
+        }
+    })
+
+    for _, url := range [2]string{"127.0.0.1:35580", "127.0.0.2:35581", "127.0.0.3:33582"} {
+        l, err := net.Listen("tcp", url)
+        if err != nil {
+            t.Fatalf("failed to listen on %s", url)
+        }
+
+        server := httptest.NewUnstartedServer(handler)
+        server.Listener.Close()
+        server.Listener = l
+
+        server.Start()
+        defer server.Close()
+    }
+
+    ctx, cancel := context.WithTimeout(context.Background(), 70 * time.Second)
+    defer cancel()
+
+    cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/comprehensive.yaml")
+    stdout, err := cmd.StdoutPipe()
+    if err != nil {
+        t.Fatalf("failed to create stdout pipe")
+    }
+
+    go cmd.Run()
+
+    i := 0
+    scanner := bufio.NewScanner(stdout)
+    if scanner.Scan() {
+        current_time := time.Now()
+
+        lines := make([]string, 0)
+        lines = append(lines, scanner.Text())
+        j := 0
+        for j < 2 && scanner.Scan() {
+            lines = append(lines, scanner.Text())
+            j++
+        }
+
+        validateLines(lines)
+        i++
+
+        for i < 3 && scanner.Scan() {
+            prev_time := current_time
+            current_time = time.Now()
+            time_diff := current_time.Sub(prev_time).Milliseconds()
+            if time_diff > 15400 || time_diff < 14600 {
+                t.Errorf("time difference between intervals was %d ms, expected time to be within 14600ms - 15400ms", time_diff)
+            }
+
+            lines := make([]string, 0)
+            lines = append(lines, scanner.Text())
+            j := 0
+            for j < 2 && scanner.Scan() {
+                lines = append(lines, scanner.Text())
+                j++
+            }
+
+            validateLines(lines)
+            i++
+        }
+    }
+
+    if i < 3 {
+        t.Errorf("got only %d iterations of availability info, expected 3", i)
+    }
+}
