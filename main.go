@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
-    "sync"
-    "sync/atomic"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -34,8 +34,8 @@ var stats = make(map[string]*DomainStats)
 
 func checkHealth(endpoint Endpoint) {
 	var client = &http.Client{
-        Timeout: 500 * time.Millisecond,
-    }
+		Timeout: 500 * time.Millisecond,
+	}
 
 	bodyBytes, err := json.Marshal(endpoint.Body)
 	if err != nil {
@@ -63,30 +63,30 @@ func checkHealth(endpoint Endpoint) {
 }
 
 func extractDomain(url string) string {
-    url, found := strings.CutPrefix(url, "https://")
-    if !found {
-        url = strings.TrimPrefix(url, "http://")
-    }
+	url, found := strings.CutPrefix(url, "https://")
+	if !found {
+		url = strings.TrimPrefix(url, "http://")
+	}
 
 	authority := strings.Split(url, "/")[0]
-    domain := strings.Split(authority, ":")[0]
+	domain := strings.Split(authority, ":")[0]
 
 	return domain
 }
 
 func checkEndpoints(endpoints []Endpoint) {
-    var wg sync.WaitGroup
+	var wg sync.WaitGroup
 
 	for _, endpoint := range endpoints {
-        wg.Add(1)
+		wg.Add(1)
 
 		go func() {
-            defer wg.Done()
-            checkHealth(endpoint)
-        }()
+			defer wg.Done()
+			checkHealth(endpoint)
+		}()
 	}
 
-    wg.Wait()
+	wg.Wait()
 }
 
 func monitorEndpoints(endpoints []Endpoint) {
@@ -97,14 +97,14 @@ func monitorEndpoints(endpoints []Endpoint) {
 		}
 	}
 
-    next_log_time := time.Now()
+	next_log_time := time.Now()
 	for {
-        checkEndpoints(endpoints)
+		checkEndpoints(endpoints)
 
 		time.Sleep(time.Until(next_log_time))
-        next_log_time = time.Now().Add(15 * time.Second)
+		next_log_time = time.Now().Add(15 * time.Second)
 
-        logResults()
+		logResults()
 	}
 }
 
