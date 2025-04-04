@@ -3,6 +3,7 @@ import (
     "bufio"
     "context"
     "encoding/json"
+    "fmt"
     "io"
     "net"
     "net/http"
@@ -274,7 +275,6 @@ func TestPostOK(t *testing.T) {
     }
 }
 
-// TODO: add test for slow endpoint, confirm refresh time is fast enough
 func TestSlow(t *testing.T) {
     handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         if r.Method != "GET" {
@@ -345,7 +345,6 @@ func TestSlow(t *testing.T) {
     }
 }
 
-// TODO: add test for multiple domains
 func TestMultipleDomains(t *testing.T) {
     handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         if r.URL.Path == "/bad" {
@@ -407,9 +406,64 @@ func TestMultipleDomains(t *testing.T) {
     }
 }
 
+func TestChangingAvailability(t *testing.T) {
+    n_requests := 0
+
+    handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if n_requests == 1 || n_requests == 2 {
+            w.WriteHeader(http.StatusInternalServerError)
+        } else {
+            w.WriteHeader(http.StatusOK)
+        }
+
+        n_requests++
+    })
+
+    url := "127.0.0.1:35580"
+    l, err := net.Listen("tcp", url)
+    if err != nil {
+        t.Fatalf("failed to listen on %s", url)
+    }
+
+    server := httptest.NewUnstartedServer(handler)
+    server.Listener.Close()
+    server.Listener = l
+
+    server.Start()
+    defer server.Close()
+
+    ctx, cancel := context.WithTimeout(context.Background(), 70 * time.Second)
+    defer cancel()
+
+    cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/get.yaml")
+    stdout, err := cmd.StdoutPipe()
+    if err != nil {
+        t.Fatalf("failed to create stdout pipe")
+    }
+
+    go cmd.Run()
+
+    percentages := [5]string{"100%", "50%", "33%", "50%", "60%"}
+
+    i := 0
+    scanner := bufio.NewScanner(stdout)
+    for i < 5 && scanner.Scan() {
+        line := scanner.Text()
+        domain, availability := parseOutput(line)
+        fmt.Println(availability)
+        if domain != "127.0.0.1" || availability != percentages[i] {
+            t.Errorf("got %s availability for %s, expected %s availability for 127.0.0.1", availability, domain, percentages[i])
+        }
+
+        i++
+    }
+
+    if i < 5 {
+        t.Errorf("got only %d lines of availability info, expected 5", i)
+    }
+}
 
 // TODO: add "super" test which includes many endpoints from several different domains, confirm output is produced every 15s exactly, and output is actually correct
 
 // TODO: test server where not all endpoints are available
 
-// TODO: test server where availability changes over time
