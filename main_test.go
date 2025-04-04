@@ -3,7 +3,6 @@ import (
     "bufio"
     "context"
     "encoding/json"
-    "fmt"
     "io"
     "net"
     "net/http"
@@ -451,7 +450,6 @@ func TestChangingAvailability(t *testing.T) {
     for i < 5 && scanner.Scan() {
         line := scanner.Text()
         domain, availability := parseOutput(line)
-        fmt.Println(availability)
         if domain != "127.0.0.1" || availability != percentages[i] {
             t.Errorf("got %s availability for %s, expected %s availability for 127.0.0.1", availability, domain, percentages[i])
         }
@@ -464,15 +462,12 @@ func TestChangingAvailability(t *testing.T) {
     }
 }
 
-// TODO: add "super" test which includes many endpoints from several different domains, confirm output is produced every 15s exactly, and output is actually correct
 func TestComprehensive(t *testing.T) {
     validateLines := func(lines []string) {
         // check that each domain exists in exactly one line
         counts := [3]int{0, 0, 0}
 
         for _, line := range lines {
-            fmt.Println(line)
-
             domain, availability := parseOutput(line)
 
             switch domain {
@@ -527,7 +522,7 @@ func TestComprehensive(t *testing.T) {
         defer server.Close()
     }
 
-    ctx, cancel := context.WithTimeout(context.Background(), 70 * time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 40 * time.Second)
     defer cancel()
 
     cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/comprehensive.yaml")
