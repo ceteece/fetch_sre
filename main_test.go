@@ -140,7 +140,6 @@ func TestGetOK(t *testing.T) {
     defer server.Close()
 
     ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
-    defer cancel()
 
     cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/basic.yaml")
     stdout, err := cmd.StdoutPipe()
@@ -148,7 +147,9 @@ func TestGetOK(t *testing.T) {
         t.Fatalf("failed to create stdout pipe")
     }
 
-    go cmd.Run()
+    cmd.Start()
+    defer cmd.Wait()
+    defer cancel()
 
     scanner := bufio.NewScanner(stdout)
     if scanner.Scan() {
@@ -185,7 +186,6 @@ func TestGetFail(t *testing.T) {
     defer server.Close()
 
     ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
-    defer cancel()
 
     cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/basic.yaml")
     stdout, err := cmd.StdoutPipe()
@@ -193,7 +193,9 @@ func TestGetFail(t *testing.T) {
         t.Fatalf("failed to create stdout pipe")
     }
 
-    go cmd.Run()
+    cmd.Start()
+    defer cmd.Wait()
+    defer cancel()
 
     scanner := bufio.NewScanner(stdout)
     if scanner.Scan() {
@@ -253,7 +255,6 @@ func TestPostOK(t *testing.T) {
     defer server.Close()
 
     ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
-    defer cancel()
 
     cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/post.yaml")
     stdout, err := cmd.StdoutPipe()
@@ -261,7 +262,9 @@ func TestPostOK(t *testing.T) {
         t.Fatalf("failed to create stdout pipe")
     }
 
-    go cmd.Run()
+    cmd.Start()
+    defer cmd.Wait()
+    defer cancel()
 
     scanner := bufio.NewScanner(stdout)
     if scanner.Scan() {
@@ -299,7 +302,6 @@ func TestSlow(t *testing.T) {
     defer server.Close()
 
     ctx, cancel := context.WithTimeout(context.Background(), 40 * time.Second)
-    defer cancel()
 
     cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/basic.yaml")
     stdout, err := cmd.StdoutPipe()
@@ -307,7 +309,9 @@ func TestSlow(t *testing.T) {
         t.Fatalf("failed to create stdout pipe")
     }
 
-    go cmd.Run()
+    cmd.Start()
+    defer cmd.Wait()
+    defer cancel()
 
     i := 0
     scanner := bufio.NewScanner(stdout)
@@ -369,7 +373,6 @@ func TestMultipleDomains(t *testing.T) {
     }
 
     ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
-    defer cancel()
 
     cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/multiple_domains.yaml")
     stdout, err := cmd.StdoutPipe()
@@ -377,7 +380,9 @@ func TestMultipleDomains(t *testing.T) {
         t.Fatalf("failed to create stdout pipe")
     }
 
-    go cmd.Run()
+    cmd.Start()
+    defer cmd.Wait()
+    defer cancel()
 
     i := 0
     scanner := bufio.NewScanner(stdout)
@@ -433,7 +438,6 @@ func TestChangingAvailability(t *testing.T) {
     defer server.Close()
 
     ctx, cancel := context.WithTimeout(context.Background(), 70 * time.Second)
-    defer cancel()
 
     cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/get.yaml")
     stdout, err := cmd.StdoutPipe()
@@ -441,7 +445,9 @@ func TestChangingAvailability(t *testing.T) {
         t.Fatalf("failed to create stdout pipe")
     }
 
-    go cmd.Run()
+    cmd.Start()
+    defer cmd.Wait()
+    defer cancel()
 
     percentages := [5]string{"100%", "50%", "33%", "50%", "60%"}
 
@@ -523,7 +529,6 @@ func TestComprehensive(t *testing.T) {
     }
 
     ctx, cancel := context.WithTimeout(context.Background(), 40 * time.Second)
-    defer cancel()
 
     cmd := exec.CommandContext(ctx, "go", "run", "main.go", "testdata/comprehensive.yaml")
     stdout, err := cmd.StdoutPipe()
@@ -531,7 +536,9 @@ func TestComprehensive(t *testing.T) {
         t.Fatalf("failed to create stdout pipe")
     }
 
-    go cmd.Run()
+    cmd.Start()
+    defer cmd.Wait()
+    defer cancel()
 
     i := 0
     scanner := bufio.NewScanner(stdout)
